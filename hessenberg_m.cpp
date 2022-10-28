@@ -2,95 +2,108 @@
 #include <iostream>
 #include <vector>
 #include <time.h>
-double sign(double x) {
-    return x >= 0 ? 1 : -1;
+#include <cstring>
+
+const int b = 64;
+const int n = 1024;
+
+void multiply_block(double *X, double *Y, double *res) {
+    for (int j = 0; j < b; ++j)
+        for (int s = 0; s < b; ++s)
+            for (int i = 0; i < b; ++i)
+                res[i + j * b] += X[i + s * b] * Y[s + j * n];
 }
 
-double ** prod(double ** mass, double ** mass2, int n)
-{
-    auto **mass3 = new double *[n];
-    for (int i = 0; i < n; i++) {
-        mass3[i] = new double[n];
-        for (int j = 0; j < n; j++) {
-            mass3[i][j] = 0;
-            for (int k = 0; k < n; k++) {
-                mass3[i][j] += mass[i][k] * mass2[k][j];
+void copy_a(double *block_a, double *A) {
+    for (int j = 0; j < b; ++j)
+        for (int i = 0; i < b; ++i)
+            block_a[i + j * b] = A[i + j * n];
+}
+
+void copy_c(double *block_c, double *C) {
+    for (int j = 0; j < b; ++j)
+        for (int i = 0; i < b; ++i)
+            C[i + j * n] = block_c[i + j * b];
+}
+
+void matmul(double *A, double *B, double *C) {
+
+    static double block_c[b * b];
+    static double block_a[b * b];
+
+    for (int j = 0; j < n; j += b) {
+        for (int i = 0; i < n; i += b) {
+            memset(block_c, 0, b * b * sizeof(double));
+            for (int k = 0; k < n; k += b) {
+                copy_a(block_a, &A[i + k * n]);
+                multiply_block(block_a, &B[k + j * n], block_c);
             }
+            copy_c(block_c, &C[i + j * n]);
         }
     }
-    return mass3;
 }
+//double* transpose(double* h){
+//    int t;
+//    double *a = (double *)malloc(n * n * sizeof(double));
+//
+//    for(int i = 0; i < n; ++i) {
+//        for(int j = 0; j < n; ++j) {
+//            a[i*n + j] = h[i +j *n];
+//        }
+//    }
+//    return a;
+//}
 
 int main () {
     int i, j, m;
     double s, r;
-    m = 512;
-    auto ** a = new double*[m];
-
-    for(i = 0; i < m; i++) {
-        a[i] = new double[m];
-        for (j = 0; j < m; j++) {
-            a[i][j] = rand();
-        }
+    m = n;
+    double *a = (double *)malloc(n * n * sizeof(double));
+    double *ans = (double *)malloc(n * n * sizeof(double));
+    for(i = 0; i < m * m; i++) {
+        a[i] = rand();
     }
     unsigned int start_time = clock();
 
     for (i = 0; i < m - 2; i++) {
         double norm = 0;
         for (j = i + 1; j < m; j++) {
-            norm += a[j][i] * a[j][i];
+            norm += a[m * j + i] * a[m * j + i];
         }
         norm = sqrt(norm);
-        s = sign(a[i + 1][i]) * norm;
-        r = sqrt(2 * a[i + 1][i] * s + 2 * s * s);
+        s = std::copysignf(1, a[(i + 1)*m + i]) * norm;
+        r = sqrt(2 * a[(i + 1)*m + i] * s + 2 * s * s);
 
         std::vector<double > w(m, 0);
 
-        w[i + 1] = (a[i + 1][i] + s) * (1 / r);
+        w[i + 1] = (a[(i + 1) * m + i] + s) * (1 / r);
         for (j = i + 2; j < m; j++) {
-            w[j] = a[j][i] * (1 / r);
+            w[j] = a[j*m + i] * (1 / r);
         }
 
-        auto ** eye = new double*[m]; //единичная матрица
-        for(j = 0; j < m; j++) {
-            eye[j] = new double[m];
-            for (int k = 0; k < m; k++) {
-                if (j == k)
-                    eye[j][k] = 1;
-                else
-                    eye[j][k] = 0;
+        double *eye= (double *)malloc(n * n * sizeof(double));
+
+        for(j = 0; j < m * m; j++) {
+            if (j % (m + 1) == 0) {
+                eye[j] = 1;
+            }
+            else {
+                eye[j] = 0;
             }
         }
-
         for(int k = 0; k < m; k++) {
             for(int t = 0; t < m; t++) {
-                eye[k][t] -= 2 * w[k] * w[t]; // матрица h
+                eye[k * m + t] -= 2 * w[k] * w[t]; // матрица h
             }
         }
-
-        a = prod(eye, a, m);
-        a = prod(a, eye, m);
+        matmul(a, eye, ans);
+        a = ans;
+        matmul(eye, a, ans);
+        a = ans;
     }
 
     unsigned int end_time = clock();
     unsigned int search_time = end_time - start_time;
-    /* print the matrix A after calling hessenberg */
-//    printf("A = \n");
-//    for(i = 0; i < m; i++) {
-//        for(j = 0; j < m; j++) {
-//            double sign = std::copysignf(1, a[i][j]);
-//            a[i][j] = sign * round(std::copysignf(1, a[i][j]) * a[i][j] * 100) / 100;
-//            std::cout<<a[i][j]<<' ';
-//        }
-//        printf("\n");
-//    }
-//    printf("\n");
     std::cout << search_time / CLOCKS_PER_SEC << std::endl;
-
-//    /* free memory */
-    for(i = 0; i < m - 1; i++) {
-        delete[] a[i];
-    }
-    delete[] a;
     return 0;
 }
