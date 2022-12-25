@@ -3,7 +3,7 @@
 #include <fstream>
 #include <cmath>
 #include <cstdlib>
-
+#include <cstring>
 #include <ctime>
 #include <chrono>
 #include <iomanip>
@@ -19,12 +19,12 @@ std::vector<float> create_matrix(int size)
     return a;
 }
 
-int dot(std::vector<float>& a, std::vector<float>& b, std::vector<float>& ans, int size, float k)
+int dot(std::vector<float>& a, std::vector<float>& b, std::vector<float>& ans, int size)
 {
 
     for (int i = 0; i < size; i++) {
         for (int j = 0; j < size; j++) {
-            ans[i * size + j] = k * a[i] * b[j];
+            ans[i * size + j] = a[i] * b[j];
         }
     }
     return 0;
@@ -68,7 +68,7 @@ void is_unitary(float ** arr, int size) {
     std::cout << "Matrix is unitary!" << '\n';
 }
 // преобразование матрицы по алгоритму Хаусхолдера
-int hausholders_transformation(std::vector<float> &matrix, int size)
+int hausholders_transformation(std::vector<float> matrix, int size)
 {
     for (int i = 0; i < size - 2; i++)
     {
@@ -76,6 +76,7 @@ int hausholders_transformation(std::vector<float> &matrix, int size)
         for (int j = i + 2; j < size; j++) {
             s += fabs(matrix[j * size + i]) * fabs(matrix[j * size + i]);
         }
+
         float norm_1 = sqrtf(fabs(matrix[i + (i + 1) * size]) * fabs(matrix[i + (i + 1) * size]) + s);
         std::vector<float> x(size);
         for (int j = 0; j < size; j++) {
@@ -88,11 +89,14 @@ int hausholders_transformation(std::vector<float> &matrix, int size)
             }
         }
 
+        std::cout<<'\n';
         float norm_x = sqrtf(fabs(x[i + 1]) * fabs(x[i + 1]) + s);
         for(int j = 0; j < size; j++) {
             x[j] = x[j] / norm_x;
         }
-
+//        for(int j = 0; j < size; j++) {
+//            std::cout<<x[j]<<' ';
+//        }
 //        check unitar
 //        Проверяем каждую матрицу U на унитарность, тк произведение унитраных матриц унитарно
 //        std::vector<float> check(size * size);
@@ -115,26 +119,28 @@ int hausholders_transformation(std::vector<float> &matrix, int size)
         std::vector<float> y(size);
         dot_matrix_vector1(matrix, x, y, size);
 
+
         std::vector<float> z(size);
         dot_matrix_vector2(matrix, x, z, size);
 
-        std::vector<float> tmp(size * size);
-        dot(x, y, tmp, size, 2);
+        std::cout<<'\n';
 
-        std::vector<float> tmp1(size * size);
-        dot(z, x, tmp1, size, 2);
-
-        float b = 0;
-        for(int j = 0; j < size; j++) {
-            b += y[j] * x[j];
-        }
-        b *= 4;
 
         std::vector<float> prom(size * size);
-        dot(x, x, prom, size, b);
+        dot(x, x, prom, size);
 
-        for(int j = 0; j < size * size; j++) {
-            matrix[j] = matrix[j] - tmp1[j] - tmp[j] + prom[j];
+        std::vector<float> tmp1(size);
+        dot_matrix_vector2(prom, x, tmp1, size);
+        for (int j = 0; j < size; j++){
+            y[j] = 2 * (y[j] - tmp1[j]);
+            z[j] = 2 * (z[j] - tmp1[j]);
+        }
+
+
+        for(int j = 0; j < size; j++) {
+            for (int k = 0; k < size; k++) {
+                matrix[j * size + k] -= x[j] * y[k] + z[j] * x[k];
+            }
         }
     }
     return 0;
@@ -156,12 +162,14 @@ void is_hessenberg(std::vector<float> &matrix, int size) {
 
 int main()
 {
-    int matrix_size= 2048;
+    int matrix_size= 4;
 
-    std::vector<float> matrix(matrix_size * matrix_size);
-    for (int i = 0; i < matrix_size * matrix_size; i++) {
-        matrix[i] = rand();
-    }
+    //std::vector<float> matrix(matrix_size * matrix_size);
+//    for (int i = 0; i < matrix_size * matrix_size; i++) {
+//        matrix[i] = rand();
+//    }
+    std::vector<float> matrix = {4, 2, 3, 1, 2, -3, 5, 1, 3, 1, 2, 1, 3, 1, 1, 2};
+   // std::vector<float> matrix = {4, 2, 3, 1, 2, -3, 5, 1, 3, 1, 2, 1, 3, 1, 1, 2};
 //    std::vector<float> matrix = {-602,  -84,  681,  867,  613, -298, -947,   70, -232,  616,  582, 337, -932, -584, -673,   83,  143,  564, -931,  909, -419,   84,
 //                                     -236, -773, -419, -847,  745,  382, -967,  852,  878,  693, -490, 898, -998,   15, -700,  606, -147, -663, -900,  179, -955,  -82,
 //                                     475,  765, -457, -420, -425,  120, -831,  246, -212,  781, -105, 347, -179, -904,  775, -523,   42,  732,  583, -507,  952,  443,
@@ -174,8 +182,7 @@ int main()
 //                                     -429,  678, -439,  268,   45, -450,    8,  -50,  -96,  602, -458, 574, -628,  178, -117, -572,  761, -870,  304, -592, -421,   60,
 //                                     843,  505, -785,  413,  990, -395,  673, -365,  114, -779, -658, 18, -621,  361,  710,  932, -787,  670, -541, -736,  525,  153,
 //                                     -184,  906,  425,  518,  -94, -822,  456, -405, -466, -232,  811, -965,   69,   44};
-   // std::vector<float> matrix = {4, 2, 23, 3, 1, -4, 12, 3, 8, 2, 2, 9, 1, -4, 7, -3, 5, -5, 11, -8, 1, 3, 1, 2, 1, 3, 1, 1, 2, 3, 21, 43, 5, -3, 6, 11};
-
+   //double matrix[6*6]  = {4, 2, 23, 3, 1, -4, 12, 3, 8, 2, 2, 9, 1, -4, 7, -3, 5, -5, 11, -8, 1, 3, 1, 2, 1, 3, 1, 1, 2, 3, 21, 43, 5, -3, 6, 11};
     auto start = std::chrono::steady_clock::now();
 
     hausholders_transformation(matrix, matrix_size);
@@ -185,15 +192,8 @@ int main()
 
 
     std::cout << "elapsed time: " << elapsed_seconds.count() << "s\n";
-//    for (int i = 0; i < matrix_size * matrix_size; i++) {
-//        if (i % matrix_size == 0) {
-//            std::cout<<'\n';
-//        }
-//        std::cout << roundf(matrix[i] * 100) / 100 << ' ';
-//    }
-//    std::cout<<'\n';
+
     //is_hessenberg(matrix, matrix_size);
 
     return 0;
 }
-
