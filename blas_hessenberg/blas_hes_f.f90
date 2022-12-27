@@ -91,12 +91,15 @@ subroutine dot_matr_vec1(a, b, ans, n)
     DOUBLE PRECISION, INTENT(IN), dimension(n, n) :: a
 
     DOUBLE PRECISION, INTENT(INOUT), dimension(n) :: ans
-    do i = 1, n
-        ans(i) = 0
-        do j = 1, n
-            ans(i) = ans(i) + a(i, j) * b(j)
-        end do
-    end do
+    
+    call dgemv('t', n, n, 1d0, a, n, b, 1, 0d0, ans, 1)
+    
+    !do i = 1, n
+    !    ans(i) = 0
+    !    do j = 1, n
+    !        ans(i) = ans(i) + a(i, j) * b(j)
+    !    end do
+    !end do
 end subroutine dot_matr_vec1
 
 
