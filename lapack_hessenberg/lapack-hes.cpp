@@ -5,7 +5,7 @@
 
 using namespace std;
 
-extern "C" void sgehrd_(int* n, int ilo, int ihi, double* a, int* lda, double* tau, double* work, int* lwork, int* info);
+extern "C" void dgehrd_(int* n, int ilo, int ihi, double* a, int* lda, double* tau, double* work, int* lwork, int* info);
 
 int main(){
 
@@ -25,7 +25,7 @@ int main(){
     double* tau = new double[size];
     double* exmp_work = new double[size];
 
-    sgehrd_(&size, 1, size, A, &lda, tau, exmp_work, &lwork, &info);
+    dgehrd_(&size, 1, size, A, &lda, tau, exmp_work, &lwork, &info);
     lwork = exmp_work[0];
 
     double* work = new double[lwork];
