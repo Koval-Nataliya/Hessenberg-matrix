@@ -33,27 +33,28 @@ int dot(std::vector<float>& a, std::vector<float>& b, std::vector<float>& ans, i
 // умножение строки на матрицу
 int dot_matrix_vector1(std::vector<float>& matrix, std::vector<float>& b, std::vector<float>& ans, int s)
 {
-    for (int k = 0; k < s; k++)
-    {
-        ans[k] = 0;
-        for (int i = 0; i < s; i++) {
-            ans[k] += matrix[i * s + k] * b[i];
-        }
-    }
+    cblas_dgemv(CblasRowMajor, CblasTrans, size, size, 1.0d, &matrix[0], size, &b[0], 1, 0.0d, &ans[0], 1);
+//     for (int k = 0; k < s; k++)
+//     {
+//         ans[k] = 0;
+//         for (int i = 0; i < s; i++) {
+//             ans[k] += matrix[i * s + k] * b[i];
+//         }
+//     }
     return 0;
 }
 
 // умножение матрциы на столюец
 int dot_matrix_vector2(std::vector<float>& matrix, std::vector<float>& b, std::vector<float>& ans, int s)
 {
-    //cblas_sgemv(CblasRowMajor, CblasNoTrans, size, size, 1, &matrix[0], size, &b[0], 1, 1.0f, &ans[0], 1);
-    for (int k = 0; k < s; k++)
-    {
-        ans[k] = 0;
-        for (int i = 0; i < s; i++) {
-            ans[k] += matrix[i + k * s] * b[i];
-        }
-    }
+    cblas_sgemv(CblasRowMajor, CblasNoTrans, size, size, 1, &matrix[0], size, &b[0], 1, 1.0f, &ans[0], 1);
+//     for (int k = 0; k < s; k++)
+//     {
+//         ans[k] = 0;
+//         for (int i = 0; i < s; i++) {
+//             ans[k] += matrix[i + k * s] * b[i];
+//         }
+//     }
     return 0;
 }
 void is_unitary(float ** arr, int size) {
