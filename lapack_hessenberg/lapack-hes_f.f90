@@ -19,13 +19,13 @@ PROGRAM main
     ilo = 1
     ihi = n
 
-    call sgehrd(n, 1, n, A, n, tau, exmp_work, lwork, info)
+    call dgehrd(n, 1, n, A, n, tau, exmp_work, lwork, info)
     lwork = exmp_work(1)
 
     allocate(work(lwork))
     call cpu_time(start)
 
-    call sgehrd(n, 1, n, A, n, tau, work, lwork, info)
+    call dgehrd(n, 1, n, A, n, tau, work, lwork, info)
 
     call cpu_time(end)
     write (*,*) "Time in seconds: "
