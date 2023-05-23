@@ -131,19 +131,20 @@ int ILU_p(int n, int p, SparseMatrix<T> &mat, SparseMatrix<T> &U, SparseMatrix<T
             } else{
                 lev_u[i*n + j] = p+1;
             }
-            U(0, j) = mat(0, j);
+   
         }
     }
-
+    
     for (int i = 1; i < n; i++)
     {
+        #pragma omp for
         for (int k = 0; k < i-1; k++){
-            if (U(i, k) != 0) {
-                L(i, k) = mat(i, k)/U(k,k);
+            if (lev_u[i*n+k]<=p) {
+                L(i, k) = U(i, k)/U(k,k);
                 lev_l[i*n + k] = lev_u[i*n + k];
                 for (int j = k; j < n; j++) {
                     U(i, j) -= L(i, k)*U(k, j);
-                    lev_u[i*n + j] = std::min(lev_u[i*n + j], lev_l[i*n + k] + lev_u[k*n + j] + 1);
+                    lev_u[i*n + j] = lev_l[i*n + k] + lev_u[k*n + j] + 1;
                     if (lev_u[i*n + j] > p) {
                         U(i, j) = 0;
                     }
@@ -151,8 +152,6 @@ int ILU_p(int n, int p, SparseMatrix<T> &mat, SparseMatrix<T> &U, SparseMatrix<T
             }
         }
 
-
-    }
 
     return 0;
 }
