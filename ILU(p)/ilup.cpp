@@ -143,7 +143,7 @@ int ILU_p(int n, int p, SparseMatrix<T> &mat, SparseMatrix<T> &U, SparseMatrix<T
                 lev_l[i*n + k] = lev_u[i*n + k];
                 for (int j = k; j < n; j++) {
                     U(i, j) -= L(i, k)*U(k, j);
-                    lev_u[i*n + j] = lev_l[i*n + k] + lev_u[k*n + j] + 1;
+                    lev_u[i*n + j] = std::min(lev_u[i*n + j], lev_l[i*n + k] + lev_u[k*n + j] + 1);
                     if (lev_u[i*n + j] > p) {
                         U(i, j) = 0;
                     }
