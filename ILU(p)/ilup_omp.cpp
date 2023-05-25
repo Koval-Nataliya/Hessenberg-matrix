@@ -140,7 +140,6 @@ int ILU_p(int n, int p, SparseMatrix<T> &mat, SparseMatrix<T> &U, SparseMatrix<T
     }
     for (int i = 1; i < n; i++)
     {
-        #pragma omp parallel for num_threads(num_threads)
         for (int k = 0; k < i-1; k++){
             if (lev_u[i*n+k]<=p) {
                 L(i, k) = U(i, k)/U(k,k);
