@@ -124,11 +124,12 @@ SparseMatrix<double>ILUp(SparseMatrix<double> matrix, int n, double p)
 
             size = { s1, s2, s3 };
             MPI_Send(size.data(), 3, MPI_INT, i, 0, MPI_COMM_WORLD);
-            MPI_Send(lev, n*n, MPI_INT, i, 1, MPI_COMM_WORLD);
 
             MPI_Send(rowPtr_tmp.data(), s1, MPI_INT, i, 1, MPI_COMM_WORLD);
             MPI_Send(colInd_tmp.data(), s2, MPI_INT, i, 2, MPI_COMM_WORLD);
             MPI_Send(values_tmp.data(), s3, MPI_DOUBLE, i, 3, MPI_COMM_WORLD);
+            
+            MPI_Send(lev.data(), n*n, MPI_INT, i, 4, MPI_COMM_WORLD);
         }
 
         for (int j = 0; j < block_size + 1; j++)
@@ -160,7 +161,7 @@ SparseMatrix<double>ILUp(SparseMatrix<double> matrix, int n, double p)
 
         rowPtr_tmp.resize(size[0]);
         MPI_Recv(rowPtr_tmp.data(), size[0], MPI_INT, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        MPI_Recv(lev, n*n, MPI_INT, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Recv(lev.data(), n*n, MPI_INT, 0, 4, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
         colInd_tmp.resize(size[1]);
         MPI_Recv(colInd_tmp.data(), size[1], MPI_INT, 0, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
