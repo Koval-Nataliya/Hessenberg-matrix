@@ -188,6 +188,17 @@ SparseMatrix<double>ILUp(SparseMatrix<double> matrix, int n, double p)
 
             for (int k = 0; k < i; k++)
             {
+                if (k >= count)
+                {
+                    std::vector<double> r(n);
+                    MPI_Recv(r.data(), n, MPI_DOUBLE, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                    for (int j = 0; j < n; j++)
+                    {
+                        result(count, j) = r[j];
+                    }
+                    count++;
+                }
+                
                 if (result(k, k) != 0 && tmp[k] != 0)
                 {
                     lev[local_row*n + k] = lev[local_row*n + local_row] + lev[k*n + local_row] + 1;
