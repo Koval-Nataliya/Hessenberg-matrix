@@ -125,19 +125,24 @@ int ILU_p(int n, int p, SparseMatrix<T> &mat, SparseMatrix<T> &U, SparseMatrix<T
 {
     std::vector <int> lev_u(n*n);
     std::vector <int> lev_l(n*n);
+    std::vector <double> u_matr(n*n);
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j<n; j++) {
+            u_matr[i*n + j] = U(i, j);
+        }
+    }
 
-    #pragma omp parallel for num_threads(num_threads)
+    #pragma omp parallel for num_threads(num_threads)    
     for(int i =0; i < n; i++) {
         for (int j = 0;j < n; j++) {
-            U(i, j) = mat(i, j);
-            if (mat(i, j) != 0 or (i ==j)) {
+            if (u_matr[i*n + j] != 0 or (i ==j)) {
                 lev_u[i*n + j] = 0;
             } else{
                 lev_u[i*n + j] = p+1;
             }
-            U(0, j) = mat(0, j);
         }
     }
+
     for (int i = 1; i < n; i++)
     {
         for (int k = 0; k < i-1; k++){
