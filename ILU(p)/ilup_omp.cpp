@@ -121,8 +121,9 @@ public:
 };
 
 template<class T>
-int ILU_p(int n, int p, SparseMatrix<T> &mat, SparseMatrix<T> &U, SparseMatrix<T> &L)
+int ILU_p(int n, int p, SparseMatrix<T> &U, SparseMatrix<T> &L)
 {
+    omp_set_num_threads(num_threads);
     std::vector <int> lev_u(n*n);
     std::vector <int> lev_l(n*n);
     std::vector <double> u_matr(n*n);
@@ -132,16 +133,17 @@ int ILU_p(int n, int p, SparseMatrix<T> &mat, SparseMatrix<T> &U, SparseMatrix<T
         }
     }
 
-    #pragma omp parallel for num_threads(num_threads)    
+    #pragma omp parallel for collapse(2)
     for(int i =0; i < n; i++) {
         for (int j = 0;j < n; j++) {
-            if (u_matr[i*n + j] != 0 or (i ==j)) {
+            if (u_matr[i*n+j] != 0 or (i ==j)) {
                 lev_u[i*n + j] = 0;
             } else{
                 lev_u[i*n + j] = p+1;
             }
         }
     }
+
 
     for (int i = 1; i < n; i++)
     {
@@ -222,7 +224,7 @@ int main()
     read_array<size_t>(colInd, "indices20.txt");
 
     SparseMatrix<double> mat(n, n);
-    SparseMatrix<double> U(n, n);
+    //SparseMatrix<double> U(n, n);
     SparseMatrix<double> L(n, n);
 
 
@@ -234,7 +236,7 @@ int main()
 
     auto start = std::chrono::steady_clock::now();
 
-    ILU_p(n, p, mat, U, L);
+    ILU_p(n, p, mat, L);
 
     auto end = std::chrono::steady_clock::now();
     std::chrono::duration<double> elapsed_seconds = end - start;
@@ -245,7 +247,7 @@ int main()
     std::cout << "-------" << std::endl;
     printCSR(L.row_indices, L.column_indices, L.values, n);
     std::cout << "-------" << std::endl;
-    printCSR(U.row_indices, U.column_indices, U.values, n);
+    printCSR(mat.row_indices, mat.column_indices, mat.values, n);
     std::cout << "-------" << std::endl;
 
 
