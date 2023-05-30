@@ -104,7 +104,8 @@ public:
         size_t k = row_indices[row + 1];
         values.insert(values.begin() + k, 0);
         column_indices.insert(column_indices.begin() + k, column);
-
+        
+        #pragma omp parallel for num_threads(num_threads)
         for (size_t i = row + 1, n2 = row_indices.size(); i < n2; i++)
             row_indices[i]++;
         return values[k];
