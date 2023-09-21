@@ -9,11 +9,11 @@ template<class T>
 class SparseMatrix
 {
 public:
-    std::vector<T> val;              
-    std::vector<int> row_ind;        
-    std::vector<int> column_ind;     
-    int rows_count, columns_count;     
-    
+    std::vector<T> val;
+    std::vector<int> row_ind;
+    std::vector<int> column_ind;
+    int rows_count, columns_count;
+
     SparseMatrix() : rows_count(0), columns_count(0) {}
     ~SparseMatrix() = default;
     SparseMatrix(int rows, int columns)
@@ -54,7 +54,6 @@ SparseMatrix<double>ILUp(SparseMatrix<double> matrix, int n, double p)
 {
     std::vector <int> lev(n*n);
 
-    MPI_Init(NULL, NULL);
     int num_tasks;
     MPI_Comm_size(MPI_COMM_WORLD, &num_tasks);
     int task_id;
@@ -124,12 +123,11 @@ SparseMatrix<double>ILUp(SparseMatrix<double> matrix, int n, double p)
 
             size = { s1, s2, s3 };
             MPI_Send(size.data(), 3, MPI_INT, i, 0, MPI_COMM_WORLD);
+            MPI_Send(lev, n*n, MPI_INT, i, 1, MPI_COMM_WORLD);
 
             MPI_Send(rowPtr_tmp.data(), s1, MPI_INT, i, 1, MPI_COMM_WORLD);
             MPI_Send(colInd_tmp.data(), s2, MPI_INT, i, 2, MPI_COMM_WORLD);
             MPI_Send(values_tmp.data(), s3, MPI_DOUBLE, i, 3, MPI_COMM_WORLD);
-            
-            MPI_Send(lev.data(), n*n, MPI_INT, i, 4, MPI_COMM_WORLD);
         }
 
         for (int j = 0; j < block_size + 1; j++)
@@ -161,7 +159,7 @@ SparseMatrix<double>ILUp(SparseMatrix<double> matrix, int n, double p)
 
         rowPtr_tmp.resize(size[0]);
         MPI_Recv(rowPtr_tmp.data(), size[0], MPI_INT, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        MPI_Recv(lev.data(), n*n, MPI_INT, 0, 4, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Recv(lev, n*n, MPI_INT, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
         colInd_tmp.resize(size[1]);
         MPI_Recv(colInd_tmp.data(), size[1], MPI_INT, 0, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
@@ -188,17 +186,6 @@ SparseMatrix<double>ILUp(SparseMatrix<double> matrix, int n, double p)
 
             for (int k = 0; k < i; k++)
             {
-                if (k >= count)
-                {
-                    std::vector<double> r(n);
-                    MPI_Recv(r.data(), n, MPI_DOUBLE, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                    for (int j = 0; j < n; j++)
-                    {
-                        result(count, j) = r[j];
-                    }
-                    count++;
-                }
-                
                 if (result(k, k) != 0 && tmp[k] != 0)
                 {
                     lev[local_row*n + k] = lev[local_row*n + local_row] + lev[k*n + local_row] + 1;
@@ -239,13 +226,14 @@ SparseMatrix<double>ILUp(SparseMatrix<double> matrix, int n, double p)
         end_time = MPI_Wtime();
         std::cout << "Program execution time: " << (end_time - start_time) << " seconds" << std::endl;
     }
-    MPI_Finalize();
     return result;
 }
 
 
 int main(int argc, char* argv[])
 {
+    MPI_Init(NULL, NULL);
+
     int n = 10;
     double p;
     std::cin>>p;
@@ -262,5 +250,7 @@ int main(int argc, char* argv[])
     matr.columns_count = n;
 
     ILUp(matr, n, p);
+    MPI_Finalize();
+
     return 0;
 }
