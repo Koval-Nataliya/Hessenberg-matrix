@@ -51,6 +51,7 @@ int main() {
                 int ind = distance(cols.begin(), it);
                 L[i][j] = (values[ind] - sum)/U[j][j];
             }
+            sum = 0;
         }
         L[i][i] = 1;
         for(int j = i+1; j < n; j++) {
@@ -64,8 +65,10 @@ int main() {
                 int ind = distance(cols.begin(), it);
                 U[i][j] = (values[ind] - sum);
             }
+            sum = 0;
         }
         it1 = it2;
+        
     }
 
     for(int i = 0; i<n; i++) {
