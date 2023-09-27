@@ -10,10 +10,17 @@ int main() {
     omp_set_num_threads(num_threads);
     vector<int>  rows, cols;
     vector<double> values;
+
+    vector<int>  rows_L, cols_L;
+    vector<double> values_L;
+
+    vector<int>  rows_U, cols_U;
+    vector<double> values_U;
+
     double sum = 0;
     //fill values
-    int n = 500;
-    int num_fill = 60;
+    int n = 100;
+    int num_fill = 40;
     #pragma omp parallel for num_threads(num_threads)
     for(int i = 0; i < num_fill; i++) {
         double v = rand() % 100;
@@ -29,15 +36,17 @@ int main() {
 //    for(int i = 0; i<10;i++){
 //        cout<<rows[i]<<' ';
 //    }
-    double L[n][n], U[n][n];
     #pragma omp parallel for num_threads(num_threads)
     for(int i = 0; i < n; i++) {
         for(int j = 0; j < n; j++) {
-            L[i][j] = 0;
-            U[i][j] = 0;
             if (i == j) {
-                L[i][j] = 1;
-                U[i][j] = 1;
+                rows_L.push_back(i);
+                cols_L.push_back(i);
+                values_L.push_back(1);
+
+                rows_U.push_back(i);
+                cols_U.push_back(i);
+                values_U.push_back(1);
             }
         }
     }
@@ -51,30 +60,53 @@ int main() {
         sum = 0;
         for(int j = 0; j<=i-1; j++) {
             auto it = find(it1, it2, j);
-            if (it == it2+1) {
-                L[i][j] = 0;
-            } else {
+            if (it != it2+1) {
                 #pragma omp parallel for num_threads(num_threads)
                 for(int k = 0; k <j-1; k++) {
-                    sum += L[i][k]*U[k][j];
+                    auto iter_tmp_L1 = find(rows_L.begin(), rows_L.end(), i);
+                    auto iter_tmp_L2 = find(cols_L.begin(), cols_L.end(), k);
+
+                    auto iter_tmp_U1 = find(rows_U.begin(), rows_U.end(), k);
+                    auto iter_tmp_U2 = find(cols_U.begin(), cols_U.end(), j);
+                    int distL1 = distance(rows_L.begin(), iter_tmp_L1);
+                    int distL2 = distance(cols_L.begin(), iter_tmp_L2);
+                    int distU1 = distance(rows_U.begin(), iter_tmp_U1);
+                    int distU2 = distance(cols_U.begin(), iter_tmp_U2);
+                    if (distL1 == distL2 && distU1 == distU2) {
+                        sum += values_L[distL1] * values_U[distU1];
+                    }
                 }
                 int ind = distance(cols.begin(), it);
-                L[i][j] = (values[ind] - sum)/U[j][j];
+                auto iter_U = find(rows_U.begin(), rows_U.end(), j);
+                int d = distance(rows_U.begin(), iter_U);
+                values_L.push_back((values[ind] - sum)/values_U[d]);
+                rows_L.push_back(i);
+                cols_L.push_back(j);
             }
             sum = 0;
         }
-        L[i][i] = 1;
         for(int j = i+1; j < n; j++) {
             auto it = find(it1, it2, j);
-            if (it == it2+1) {
-                U[i][j] = 0;
-            } else {
+            if (it != it2+1) {
                 #pragma omp parallel for num_threads(num_threads)
                 for(int k = 0; k <j-1; k++) {
-                    sum += L[i][k]*U[k][j];
+                    auto iter_tmp_L1 = find(rows_L.begin(), rows_L.end(), i);
+                    auto iter_tmp_L2 = find(cols_L.begin(), cols_L.end(), k);
+
+                    auto iter_tmp_U1 = find(rows_U.begin(), rows_U.end(), k);
+                    auto iter_tmp_U2 = find(cols_U.begin(), cols_U.end(), j);
+                    int distL1 = distance(rows_L.begin(), iter_tmp_L1);
+                    int distL2 = distance(cols_L.begin(), iter_tmp_L2);
+                    int distU1 = distance(rows_U.begin(), iter_tmp_U1);
+                    int distU2 = distance(cols_U.begin(), iter_tmp_U2);
+                    if (distL1 == distL2 && distU1 == distU2) {
+                        sum += values_L[distL1] * values_U[distU1];
+                    }
                 }
                 int ind = distance(cols.begin(), it);
-                U[i][j] = (values[ind] - sum);
+                values_U.push_back(values[ind] - sum);
+                rows_U.push_back(i);
+                cols_U.push_back(j);
             }
             sum = 0;
         }
@@ -85,7 +117,5 @@ int main() {
 
 
     std::cout << "elapsed time: " << elapsed_seconds.count() << "s\n";
-
-    
     return 0;
 }
