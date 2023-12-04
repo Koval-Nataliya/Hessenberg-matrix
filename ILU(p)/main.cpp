@@ -80,7 +80,7 @@ int main() {
 
     //main cycle
     for(int i = 0; i< number_of_str; i++) {
-        for (int j = 0; j <number_of_str;j++) {
+        for (int j = i+1; j <inter;j++) {
             vec[j] = axy(vec[i], vec[j], i);
         }
     }
